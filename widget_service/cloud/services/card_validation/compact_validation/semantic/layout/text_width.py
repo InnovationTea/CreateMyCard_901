@@ -52,6 +52,7 @@ def _collect_text_width_budget_errors(
         if message not in errors:
             errors.append(message)
         return
+    _collect_data_display_value_width_errors(components, task_spec, boxes, by_id, errors)
     for row in components:
         if row.component_type not in {"Text", "Button"}:
             continue
@@ -84,7 +85,15 @@ def _collect_text_width_budget_errors(
         text = small_card_display_text(content, task_spec)
         if text is None and isinstance(content, str) and "{{" not in content:
             text = content
-        if not isinstance(text, str) or not text or "\n" in text:
+        if not isinstance(text, str) or not text:
+            continue
+        if "\n" in text:
+            center_title = (
+                _uses_visual_recipe_part(row, "DoubleLineTitle.secondary")
+                or _uses_visual_recipe_part(row, "DoubleLineTitle.title")
+            )
+            if center_title and props.get("height") == 21:
+                errors.append(f"component {row.component_id}: S-center title must be one line.")
             continue
         duration_error = _compound_duration_label_width_error(
             row,
@@ -325,6 +334,51 @@ def _compound_duration_label_width_error(
         "legal two-line body text at the same font and budget its height, or regroup. "
         "Weight, clipping and dropping units do not close this text budget."
     )
+
+
+def _collect_data_display_value_width_errors(
+    components: list[ComponentRow],
+    task: dict[str, Any],
+    boxes: dict,
+    by_id: dict[str, ComponentRow],
+    errors: list[str],
+) -> None:
+    """新数值Row核算数字和单位总宽，复用已知显示值及规划文字压力算法。"""
+    from services.compact_composition_context import small_card_display_text
+    from services.compact_composition_planner import _text_width
+
+    for row in components:
+        if not _uses_visual_recipe_part(row, "DataDisplay.valueRow"):
+            continue
+        box = boxes.get(row.component_id)
+        if box is None or box.width is None:
+            continue
+        required = 0.0
+        complete = True
+        for child_id in row.children:
+            child = by_id.get(child_id)
+            if child is None:
+                complete = False
+                break
+            content = child.props.get("content")
+            text = small_card_display_text(content, task)
+            if text is None:
+                text = small_card_display_text(content, task, bounded_only=True)
+            font = _non_negative_number(child.props.get("fontSize"))
+            if text is None or font is None:
+                complete = False
+                break
+            required += _text_width(text, font) + _horizontal_padding(child.props)
+        if not complete:
+            continue
+        gap = _non_negative_number(row.props.get("itemMargin")) or 0.0
+        required += gap * max(0, len(row.children) - 1)
+        available = box.width - _horizontal_padding(row.props)
+        if required > available:
+            errors.append(
+                f"component {row.component_id}: numeric DataDisplay value and unit require "
+                f"about {required:g}vp within {available:g}vp at fixed 56/16fp."
+            )
 
 
 def _horizontal_padding(props: dict[str, Any]) -> float:

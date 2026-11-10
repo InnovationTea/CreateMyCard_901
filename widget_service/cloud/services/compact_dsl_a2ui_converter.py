@@ -1881,7 +1881,7 @@ def _is_numeric_unit_pair(
     unit = texts[1].props.get("content")
     marker = texts[1].props.get("_visualRecipe", "")
     if isinstance(marker, str) and marker.startswith(VISUAL_RECIPE_VERSION + ":"):
-        if marker.endswith(":unit"):
+        if marker.endswith((":unit", ".unit")):
             return True
     if not isinstance(unit, str) or unit.strip() not in _INLINE_DISPLAY_UNITS:
         return False
@@ -1909,6 +1909,8 @@ def _text_bottom_offset(
                        "℃": 1.25, "°C": 1.25, "km": 1.25, "小时": 1.75},
             (16, 10): {"%": 2, "步": 3, "分": 3, "天": 2.75,
                        "℃": 2, "°C": 2, "km": 2, "小时": 2.75},
+            # “天”按用户视觉调整为14；%保留HarmonyOS Sans SC/border-box参考校准。
+            (56, 16): {"天": 14, "%": 18},
         }
         if isinstance(unit, str):
             # 字形设计数据不按用例/机型分支，不外推未测文字规格。
@@ -1924,21 +1926,50 @@ def _can_calibrate_unit_bottom(
     marker = props.get("_visualRecipe", "")
     recipe_unit = False
     if isinstance(marker, str) and marker.startswith(VISUAL_RECIPE_VERSION + ":"):
-        recipe_unit = marker.endswith(":unit")
+        recipe_unit = marker.endswith((":unit", ".unit"))
     if not numeric_unit_pair and not recipe_unit:
         return False
     if props.get("fontWeight") != 500 or primary.get("fontWeight") != 700:
         return False
     if props.get("fontFamily") is not None or primary.get("fontFamily") is not None:
         return False
-    if (largest, font) == (30, 12):
+    if (largest, font) in {(30, 12), (56, 16)}:
         return props.get("lineHeight") == 1 and primary.get("lineHeight") == 1
     if (largest, font) == (16, 10):
         return props.get("lineHeight") is None and primary.get("lineHeight") is None
     return False
 
 
+def _compensate_fixed_unit_bottom(props: dict[str, Any], offset: int | float) -> None:
+    """固定文字框用外边距补偿，不把补偿内边距挤入21vp文字框。"""
+    margin = props.get("margin", 0)
+    if isinstance(margin, (int, float)) and not isinstance(margin, bool):
+        margin = {side: margin for side in ("top", "right", "bottom", "left")}
+    elif isinstance(margin, dict):
+        margin = dict(margin)
+    else:
+        return
+    bottom = margin.get("bottom", 0)
+    previous = props.get("_glyphBottomOffset", 0)
+    for value in (bottom, previous):
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            return
+        if not math.isfinite(value) or value < 0:
+            return
+    margin["bottom"] = bottom - previous + offset
+    props["margin"] = margin
+    props["_glyphBottomOffset"] = offset
+
+
 def _compensate_text_bottom(props: dict[str, Any], font: float, offset: int | float) -> None:
+    fixed_day_unit = (
+        props.get("_visualRecipe") == f"{VISUAL_RECIPE_VERSION}:DataDisplay.unit"
+        and props.get("content") == "天"
+        and font == 16
+    )
+    if fixed_day_unit:
+        _compensate_fixed_unit_bottom(props, offset)
+        return
     padding = props.get("padding", 0)
     if isinstance(padding, (int, float)) and not isinstance(padding, bool):
         padding = {side: padding for side in ("top", "right", "bottom", "left")}

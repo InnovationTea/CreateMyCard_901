@@ -114,3 +114,11 @@ actions 按 info_required 动作顺序逐项分配：先结合动作对象、完
 
 提交前核对：事实来源准确、原子项无遗漏、不重复；候选实际可承载；完整序列化 name/arguments，不在已闭合对象后追加重复括号。
 <!-- /prompt:contract -->
+
+### S-center 单数值角色
+
+2x2无动作单数值优先S-center + DataDisplay，适用于任意已支持业务，不按业务文字推断。
+同一次Plan用dataDisplayRole标记value唯一核心、title主标题、subtitle紧密相关次信息、unit单位；
+这些事实首选组件均为DataDisplay，不把第二个等权指标伪装为subtitle。没有必要次信息就不选subtitle。
+主副标题不是独立根标题组件；DSL按角色填label/secondaryInfo/value/unit，不增加模型调用。
+目标日期只有已选入展示时才可成为副标题；不得从天数反推或根据标题长度补造。

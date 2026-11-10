@@ -16,7 +16,11 @@ from services.card_validation.compact_validation.syntax.expressions import (
 from services.compact_action_instances import event_card_item_handlers, plan_action_handlers
 from services.compact_component_semantics import CORE_INFORMATION_COMPONENT_TYPES
 from services.compact_dsl_a2ui_converter import ComponentRow
-from services.compact_plan import compact_plan_overflow_action_ids
+from services.compact_plan import (
+    _compact_fact_coverage_result,
+    _compact_visible_state,
+    compact_plan_overflow_action_ids,
+)
 from services.compact_whole_card_click import accepted_whole_card_click
 from services.event_matching import event_handlers_match
 
@@ -187,6 +191,38 @@ def collect_plan_contract_errors(
         size=size,
     )
     _collect_anchor_support_errors(components, compact_plan, errors)
+    _collect_data_display_role_errors(components, compact_plan, errors)
+
+
+def _collect_data_display_role_errors(
+    components: list[ComponentRow],
+    plan: dict[str, Any] | None,
+    errors: list[str],
+) -> None:
+    """角色到实际字段的跨文件合同，复用已有事实覆盖算法，不另判业务含义。"""
+    if not isinstance(plan, dict):
+        return
+    slots = {"title": "label", "subtitle": "secondaryInfo", "value": "value", "unit": "unit"}
+    displays = [row for row in components if row.component_type == "DataDisplay"]
+    for fact in plan.get("info_required", []):
+        if not isinstance(fact, dict):
+            continue
+        display_role = fact.get("dataDisplayRole")
+        if not isinstance(display_role, str):
+            continue
+        slot = slots.get(display_role)
+        if slot is None:
+            continue
+        matched = False
+        if len(displays) == 1:
+            value = displays[0].props.get(slot)
+            scoped = ComponentRow("root", "DataDisplay", {slot: value})
+            coverage = _compact_fact_coverage_result(fact, _compact_visible_state([scoped]), {})
+            matched = not coverage.errors
+        if not matched:
+            errors.append(
+                f"Plan dataDisplayRole {display_role} must be preserved in DataDisplay.{slot}."
+            )
 
 
 def _collect_whole_card_click_errors(

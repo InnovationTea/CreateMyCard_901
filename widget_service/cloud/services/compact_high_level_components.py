@@ -3069,6 +3069,83 @@ def _data_display_variant(
     return None
 
 
+def _optional_data_display_text(component: ComponentRow, name: str) -> Any:
+    value = component.props.get(name)
+    if isinstance(value, str) and not value.strip():
+        value = None
+    if value is not None:
+        _require_string_display_value(component, name)
+    return value
+
+
+def _data_display_optional_visibility(value: Any) -> str | None:
+    expression: str | None = None
+    if _is_path_binding(value):
+        expression = "${" + value.get("path") + "}"
+    elif isinstance(value, str) and value.strip().startswith("{{"):
+        expression = value.strip().removeprefix("{{").removesuffix("}}").strip()
+    result: str | None = None
+    if expression is not None:
+        result = (
+            "{{ (" + expression + ") != null && (" + expression
+            + ") != '' ? 'visible' : 'none' }}"
+        )
+    return result
+
+
+def _expand_numeric_data_display(component: ComponentRow, size: str) -> list[ComponentRow]:
+    """通用单数值配方；副标题分组连同间距一起隐藏，不冻结动态样例。"""
+    subtitle = _optional_data_display_text(component, "secondaryInfo")
+    unit = _optional_data_display_text(component, "unit")
+    identifier = component.component_id
+    title_area = f"{identifier}_title_area"
+    label_id = f"{identifier}_label"
+    subtitle_id = f"{identifier}_secondary"
+    subtitle_group = f"{identifier}_subtitle_group"
+    numeric_area = f"{identifier}_numeric_area"
+    value_row = f"{identifier}_value_row"
+    value_id = f"{identifier}_value"
+    unit_id = f"{identifier}_unit"
+    title_children = (label_id,) if subtitle is None else (label_id, subtitle_group)
+    value_children = (value_id,) if unit is None else (value_id, unit_id)
+    color = component.props.get("fontColor")
+    rows = [
+        _visual_row(identifier, "DataDisplay", "root", size=size, variant="numericFocus",
+                    children=(title_area, numeric_area)),
+        _visual_row(title_area, "DoubleLineTitle", "root", size=size, variant="sCenter",
+                    children=title_children),
+        _visual_row(label_id, "DoubleLineTitle", "title", size=size, variant="sCenter",
+                    props={"content": component.props.get("label"), "fontColor": color}),
+        _visual_row(numeric_area, "DataDisplay", "numericArea", size=size,
+                    variant="numericFocus", children=(value_row,)),
+        _visual_row(value_row, "DataDisplay", "valueRow", size=size, variant="numericFocus",
+                    children=value_children),
+        _visual_row(value_id, "DataDisplay", "value", size=size, variant="numericFocus",
+                    props={"content": copy.deepcopy(component.props.get("value")),
+                           "fontColor": color}),
+    ]
+    if subtitle is not None:
+        visibility = _data_display_optional_visibility(subtitle)
+        group_props = {} if visibility is None else {"visibility": visibility}
+        rows.extend([
+            _visual_row(subtitle_group, "DataDisplay", "subtitleGroup", size=size,
+                        variant="numericFocus", props=group_props, children=(subtitle_id,)),
+            _visual_row(subtitle_id, "DoubleLineTitle", "secondary", size=size,
+                        variant="sCenter", props={"content": copy.deepcopy(subtitle),
+                                                  "fontColor": _color_with_alpha(color, 0.6)}),
+        ])
+    if unit is not None:
+        unit_props = {"content": copy.deepcopy(unit), "fontColor": color}
+        unit_visibility = _data_display_optional_visibility(unit)
+        if unit_visibility is not None:
+            unit_props["visibility"] = unit_visibility
+        rows.append(_visual_row(
+            unit_id, "DataDisplay", "unit", size=size, variant="numericFocus",
+            props=unit_props,
+        ))
+    return rows
+
+
 def _expand_data_display(
     component: ComponentRow,
     size: str,
@@ -3085,10 +3162,12 @@ def _expand_data_display(
         "supportingText",
         "fontColor",
         "fontSize",
+        "secondaryInfo",
+        "unit",
     }
     _validate_high_level_props(
         component,
-        required={"value", "supportingText", "fontColor"},
+        required={"value", "fontColor"},
         allowed=allowed,
     )
     variant = _data_display_variant(component, data_model)
@@ -3111,8 +3190,19 @@ def _expand_data_display(
             f"{component.component_id}: numeric DataDisplay requires a text label."
         )
     _require_text_value(component, "value")
-    _require_text_value(component, "supportingText")
     _require_color(component, "fontColor")
+    new_props = {"secondaryInfo", "unit"}.intersection(component.props)
+    if "supportingText" in component.props and new_props:
+        raise CompactDslConversionError(
+            f"{component.component_id}: do not mix legacy supportingText with secondaryInfo/unit."
+        )
+    if variant is None and "supportingText" not in component.props:
+        return _expand_numeric_data_display(component, size)
+    if variant == "textConclusion" and new_props:
+        raise CompactDslConversionError(
+            f"{component.component_id}: secondaryInfo/unit require numeric DataDisplay.value."
+        )
+    _require_text_value(component, "supportingText")
     secondary_color = _color_with_alpha(component.props["fontColor"], 0.6)
 
     label_id = f"{component.component_id}_label"

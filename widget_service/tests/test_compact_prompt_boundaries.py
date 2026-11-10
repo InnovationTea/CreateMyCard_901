@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import pytest
+
 from services.compact_prompt_loader import FRAGMENT, read_prompt
 
 SOURCE = (
@@ -74,6 +75,8 @@ EXPECTED_PROPS = {
     "DataDisplay": [
         "icon",
         "label",
+        "secondaryInfo",
+        "unit",
         "supportingText",
         "value"
     ],

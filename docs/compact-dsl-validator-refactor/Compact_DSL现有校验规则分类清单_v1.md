@@ -1484,3 +1484,20 @@ Plan 试排原有的无保护 should 省略候选保持原优先级与遗漏反�
 归入 Plan 语义／信息覆盖，与同条 `SecondaryBody` 标签和值的组合遵守相同边界。
 不跨节点、跨条目拼接，不执行动态表达式，不改写数字、单位或错误级别；无单位、数值或单位不匹配仍按原规则判断。
 回归扩展已有 `test_compact_plan.py`，同时核对原转换结果不变；不新增几何检查、诊断码或重试权限。
+
+## 2026-11-10 S-center 数值标题角色
+
+- secondaryInfo/unit字段形状与组合：语法／组件，委托compact_high_level_components.py共享展开，
+  不复制进校验器；绑定能力委托compact_component_bindings.py。
+- 已接受dataDisplayRole到label/secondaryInfo/value/unit的落点：语义／跨文件一致性，
+  semantic/plan_contracts.py::_collect_data_display_role_errors复用compact_plan事实覆盖算法；
+  只在显式角色存在时执行，不通过业务文案判断关联性。
+- 44vp标题和56/16数值的宽高预算：语义／布局，复用text_width.py、horizontal.py、geometry.py；
+  text_width.py::_collect_data_display_value_width_errors仅为新数值Row累计数字和单位的总宽，
+  复用small_card_display_text和_text_width，不改变其它Row的预算或新增错误码。建议由现有修复提示词负责，重试仍归既有策略。
+- Plan角色格式与单核心路线：compact_plan.py，不迁移普通修复范围之外的历史规则。
+- 回归：widget_service/tests/test_s_center_numeric_focus.py。
+
+S-center弹性数值区的高度属于语义／布局：44vp标题、8vp间距及74vp内部行的下界，
+继续由semantic/layout/geometry.py核算，区域分配复用compact_region_layout.py，不复制新预算算法。
+回归：test_s_center_numeric_focus.py显式150/200/260参考高度及140高度不足；浏览器脚本检查实际居中。

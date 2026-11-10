@@ -28,8 +28,8 @@ description: 共用单组件的语义、Props、容量和示例；尺寸差异�
 
 符合专用语义、类型及容量时优先相应组件；不为用组件补造字段。单一核心与真实同级关系不能混淆。
 2x2 无动作且整卡只有一个核心读数或1–10字短文本结论及其紧密支撑时，优先使用尺寸专属的
-`S-center` + `DataDisplay`；不要仅放置一个 `EmphasizedData` 或 `EmphasisText`。一个明确核心附带地点、
-备注、限定或短明细等从属信息时，使用普通核心组件与 `SecondaryBody`。恰好两个等权、各自能够独立
+`S-center` + `DataDisplay`；不要仅放置一个 `EmphasizedData` 或 `EmphasisText`。单核心数值的单行对象范围、地点、状态或目标可作为DataDisplay的可选secondaryInfo；
+需要独立展示区域的备注、限定或明细使用普通核心组件与 `SecondaryBody`。恰好两个等权、各自能够独立
 理解的短信息不是“核心 + 补充”，应各用一个 `InfoBlock`，再由尺寸布局承载，不把其中一项降为
 `SecondaryBody`。
 尺寸专属组件见对应尺寸总表。Text 不是生成候选。
@@ -101,6 +101,9 @@ description: 共用单组件的语义、Props、容量和示例；尺寸差异�
 ["device_title","DoubleLineTitle",{"title":{"path":"/data/sensor/displayName"},"secondaryInfo":{"path":"/data/sensor/connectionStatus"},"fontSize":12}]
 ```
 
+
+S-center 数值 DataDisplay 内部借用专属标题配方：主副标题16fp/21vp、间距2vp、44vp区域居中；
+副标题可选。此配方不作为公共 DoubleLineTitle 的可选模型属性，不改变上文12fp默认合同。
 
 ### 3. `Badge`
 

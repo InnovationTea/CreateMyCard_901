@@ -2309,6 +2309,13 @@ class PromptBuilder:
                 execution_selected=True,
             )
         )
+        context_parts.append(
+            "S-center数值DataDisplay保持唯一内容：label主标题，secondaryInfo可选紧密相关次信息，"
+            "value唯一数值，unit可选单位。按已接受事实的dataDisplayRole映射；"
+            "subtitle未选入就省略secondaryInfo，不再决定或补造副标题。"
+            "标题44vp、16fp，数值56fp及单位16fp均由程序展开，不提交字号或内部布局。"
+            "新数值模式不输出supportingText；文本结论模式仍使用原supportingText合同。"
+        )
         if runtime_context_enabled:
             context_parts.append(
                 compact_composition_context(
