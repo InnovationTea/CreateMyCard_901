@@ -221,6 +221,36 @@ def test_top_bottom_variants_and_optional_title(variant: str, with_title: bool) 
     assert match.layout_id == "W-top-bottom"
 
 
+@pytest.mark.parametrize(("count", "font"), [(2, 12), (3, 10)])
+@pytest.mark.parametrize("variant", ["continuous", "equal"])
+def test_top_bottom_table_uses_weight_only_in_stretch_slot(
+    count: int, font: int, variant: str,
+) -> None:
+    items = [{"label": f"项目{index}", "value": "12分钟"} for index in range(count)]
+    rows = [
+        ["root", "Layout", {"layout": "W-top-bottom", "variant": variant}, ["table", "times"]],
+        ["table", "TableText", {"items": items, "fontSize": font}],
+        ["times", "TextBlock", {"items": [
+            {"label": "日期", "value": "2026-11-10"},
+            {"label": "更新", "value": "2026-11-10 09:30:45"},
+        ]}],
+    ]
+    converted = convert_compact_dsl_to_a2ui(_source(rows), size="2x4")
+    update = json.loads(converted.splitlines()[1]).get("updateComponents")
+    assert update is not None
+    components = update.get("components")
+    assert components is not None
+    by_id = {node.get("id"): node for node in components}
+    table = by_id.get("table")
+    assert table is not None
+    styles = table.get("styles", {})
+    assert styles.get("layoutWeight") == (None if variant == "continuous" else 1)
+    assert len(table.get("children", [])) == count
+    timestamp = by_id.get("times_item1_value")
+    assert timestamp is not None
+    assert timestamp.get("content") == "2026-11-10 09:30:45"
+
+
 def test_top_bottom_accepts_event_card_in_primary_and_details() -> None:
     rows = [
         [

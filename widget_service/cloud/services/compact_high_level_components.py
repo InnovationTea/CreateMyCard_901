@@ -153,6 +153,10 @@ def _place_high_level_root(
             props[name] = copy.deepcopy(original.props[name])
     if "width" in original.props and "layoutWeight" not in original.props:
         props.pop("layoutWeight", None)
+    if parent is not None and original.component_type == "TableText":
+        if parent.component_id == "__layout__root__primary" and parent.props.get("flexShrink") == 0:
+            # continuous 主体按表格行高占位，纵向权重会挤占明细区域。
+            props.pop("layoutWeight", None)
     return ComponentRow(expanded.component_id, expanded.component_type, props, expanded.children)
 
 
