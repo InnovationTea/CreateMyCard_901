@@ -1,0 +1,8 @@
+["root","Layout",{"layout":"S-dual-info"},["first","second"]]
+["first","InfoBlock",{"primaryText":{"path":"/data/battery/batterySOCText"},"secondaryText":{"path":"/data/battery/chargingStatusDesc"}}]
+["second","InfoBlock",{"primaryText":{"path":"/data/time/currentDate"},"secondaryText":{"path":"/data/time/dayOfWeek"}}]
+["/data/battery/batterySOCText","68%"]
+["/data/battery/chargingStatusDesc","未充电"]
+["/data/time/currentDate","2026-07-09"]
+["/data/time/dayOfWeek","星期四"]
+["/data/time/lunarDate","五月廿六"]

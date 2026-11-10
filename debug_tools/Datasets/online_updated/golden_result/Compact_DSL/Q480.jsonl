@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"W-static-content"},["header","body"]]
+["header","SingleLineTitle",{"title":"本周值班安排"}]
+["body","SingleLineList",{"items":[{"text":"周二","assist":"上午上班，下午休息"},{"text":"周四","assist":"上午休息，下午上班"},{"text":"周三、周五","assist":"全天上班"},{"text":"周六、周日","assist":"上午上班，下午休息"}]}]
+["/state/ready",true]

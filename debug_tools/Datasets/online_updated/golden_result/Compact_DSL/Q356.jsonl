@@ -1,0 +1,7 @@
+["root","Layout",{"layout":"S-title-content-action"},["title","content","action"]]
+["title","SingleLineTitle",{"title":"时钟","icon":"resources/base/media/emoji_time.png","fontSize":12}]
+["content","EventCard",{"items":[{"title":{"path":"/data/time/currentDate"},"time":{"path":"/data/time/dayOfWeek"},"location":{"path":"/data/time/lunarDate"}}]}]
+["action","PillButton",{"label":"打开时钟","onClick":[{"call":"clickToDeeplink","args":{"abilityName":"com.huawei.hmos.clock.phone","bundleName":"com.huawei.hmos.clock","intentName":"Clock","uri":""}}]}]
+["/data/time/currentDate","2026-07-09"]
+["/data/time/dayOfWeek","星期四"]
+["/data/time/lunarDate","五月廿六"]

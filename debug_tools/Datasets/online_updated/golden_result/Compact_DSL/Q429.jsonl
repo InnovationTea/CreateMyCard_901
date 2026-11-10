@@ -1,0 +1,7 @@
+["root","Column",{"width":"matchParent","height":"matchParent","borderRadius":20,"clip":true,"alignItems":"start","justifyContent":"start","padding":12,"itemMargin":6},["title","body_flow"]]
+["title","SingleLineTitle",{"title":"生日倒计时","icon":"resources/base/media/cake_fill.svg","fontSize":12,"width":"matchParent"}]
+["body_flow","Column",{"width":"matchParent","layoutWeight":1,"alignItems":"start","justifyContent":"end"},["content_flow"]]
+["content_flow","Column",{"width":"matchParent","layoutWeight":1,"itemMargin":6,"alignItems":"start","justifyContent":"start"},["primary","support"]]
+["primary","EmphasizedData",{"value":{"path":"/data/countdown/countdownDays"},"unit":"天","fontSize":30,"width":"matchParent"}]
+["support","SecondaryBody",{"items":[{"value":"腊月初一 · 2027年1月8日","maxLines":2}],"fontSize":12,"width":"matchParent"}]
+["/data/countdown/countdownDays",30]

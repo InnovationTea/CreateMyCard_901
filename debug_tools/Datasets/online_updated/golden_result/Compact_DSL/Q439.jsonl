@@ -1,0 +1,5 @@
+["root","Layout",{"layout":"S-title-content-action"},["title","content","action"]]
+["title","SingleLineTitle",{"title":"我的记忆","fontSize":12}]
+["content","EmphasisText",{"mainText":{"path":"/data/memo/todoTotalCount"},"secondaryText":"待办事项","fontSize":18}]
+["action","PillButton",{"label":"查看备忘","onClick":[{"call":"clickToIntent","args":{"abilityName":"MainAbility","bundleName":"com.huawei.hmos.notepad","intentName":"ViewNote","params":{"launchSource":"1","launchType":"0"}}}]}]
+["/data/memo/todoTotalCount",0]

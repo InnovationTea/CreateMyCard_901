@@ -1,0 +1,8 @@
+["root","Layout",{"layout":"S-title-content-action"},["title","content","action"]]
+["title","SingleLineTitle",{"title":"运动健康","fontSize":12}]
+["content","Group",{"variant":"hero-support"},["content_primary","content_support"]]
+["content_primary","EmphasizedData",{"value":{"path":"/data/healthSport/dailySteps"},"unit":"步","fontSize":30}]
+["content_support","SecondaryBody",{"items":[{"value":{"path":"/data/healthSport/dailyDistanceText"}}],"fontSize":14}]
+["action","PillButton",{"label":"运动锻炼","icon":"resources/base/media/figure_run.svg","onClick":[{"call":"clickToDeeplink","args":{"abilityName":"","bundleName":"","intentName":"Health","uri":"huaweischeme://healthapp/home/sport?sportType=2"}}]}]
+["/data/healthSport/dailySteps",6200]
+["/data/healthSport/dailyDistanceText","4.60 公里"]

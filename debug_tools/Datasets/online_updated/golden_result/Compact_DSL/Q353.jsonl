@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"S-static-content"},["header","body"]]
+["header","SingleLineTitle",{"title":"取件码提醒","icon":"resources/base/media/bell_fill.svg"}]
+["body","EmphasisText",{"mainText":"取件码34-4-2009","secondaryText":"新天地华庭3座2单元妈妈驿站","bottomText":"明天下午6:10提醒"}]
+["/state/ready",true]

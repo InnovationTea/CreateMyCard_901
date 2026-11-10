@@ -1,0 +1,6 @@
+["root","Layout",{"layout":"S-title-dual-content"},["title","primary","support"]]
+["title","SingleLineTitle",{"title":"今日","fontSize":12}]
+["primary","EmphasisText",{"mainText":{"path":"/data/time/currentDate"},"fontSize":18}]
+["support","SecondaryBody",{"items":[{"label":"星期","value":{"path":"/data/time/dayOfWeek"}}],"fontSize":14}]
+["/data/time/currentDate","2026-07-09"]
+["/data/time/dayOfWeek","星期四"]

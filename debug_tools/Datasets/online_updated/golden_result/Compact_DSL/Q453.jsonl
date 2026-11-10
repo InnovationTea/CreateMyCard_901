@@ -1,0 +1,8 @@
+["root","Layout",{"layout":"S-dual-info"},["weather_block","earphone_block"]]
+["weather_block","InfoBlock",{"surfaceRole":"panel","primaryText":"{{ ${/data/weather/current/temperatureText} + ' ' + ${/data/weather/current/condition} }}","secondaryText":"杭州天气","visual":{"type":"icon","icon":"resources/base/media/emoji_default_weather_blue.png"}}]
+["earphone_block","InfoBlock",{"surfaceRole":"panel","primaryText":"{{ '耳机盒 ' + ${/data/earphone/batteryLevel} + '%' }}","secondaryText":"{{ '左耳 ' + ${/data/earphone/leftBatteryLevel} + '% | 右耳 ' + ${/data/earphone/rightBatteryLevel} + '%' }}","visual":{"type":"icon","icon":"resources/base/media/emoji_earbud_case_black.png"}}]
+["/data/weather/current/temperatureText","29℃"]
+["/data/weather/current/condition","多云"]
+["/data/earphone/batteryLevel",80]
+["/data/earphone/leftBatteryLevel",76]
+["/data/earphone/rightBatteryLevel",78]

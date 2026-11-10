@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"S-title-content"},["title","content"]]
+["title","SingleLineTitle",{"title":"手机电量","fontSize":12}]
+["content","EmphasizedData",{"value":{"path":"/data/phoneBattery/batterySOCText"},"fontSize":30}]
+["/data/phoneBattery/batterySOCText","68%"]

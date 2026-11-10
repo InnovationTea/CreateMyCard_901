@@ -1,0 +1,6 @@
+["root","Layout",{"layout":"S-title-dual-content"},["title","temperature","condition"]]
+["title","SingleLineTitle",{"title":"天气","fontSize":12}]
+["temperature","EmphasisText",{"mainText":{"path":"/data/weather/current/temperatureText"},"fontSize":18}]
+["condition","SecondaryBody",{"items":[{"value":{"path":"/data/weather/current/condition"}}],"fontSize":14}]
+["/data/weather/current/temperatureText","29℃"]
+["/data/weather/current/condition","多云"]

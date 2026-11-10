@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"S-static-content"},["header","body"]]
+["header","SingleLineTitle",{"title":"生日贺卡"}]
+["body","TextList",{"items":[{"primaryText":"祝你生日快乐！","secondaryText":"今天是你＿＿周岁"},{"primaryText":"强健体魄、阳光成长","secondaryText":"感恩党、感恩祖国，勤学上进"}]}]
+["/state/ready",true]

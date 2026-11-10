@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"S-static-content"},["header","body"]]
+["header","SingleLineTitle",{"title":"2027结婚吉日","icon":"resources/base/media/emoji_calendar2.png"}]
+["body","TextList",{"items":[{"primaryText":"2027年吉日","secondaryText":"每月均有可选婚期"},{"primaryText":"具体日期","secondaryText":"需查当日黄历"}]}]
+["/state/ready",true]

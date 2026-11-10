@@ -1,0 +1,4 @@
+["root","Layout",{"layout":"W-static-content"},["header","body"]]
+["header","SingleLineTitle",{"title":"月份中英文对照"}]
+["body","SingleLineList",{"items":[{"text":"1月","assist":"January (Jan)"},{"text":"2月","assist":"February (Feb)"},{"text":"3月","assist":"March (Mar)"},{"text":"4月","assist":"April (Apr)"},{"text":"5月","assist":"May"}]}]
+["/state/ready",true]
