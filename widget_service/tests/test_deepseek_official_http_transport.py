@@ -9,10 +9,6 @@ from openai.resources.chat.completions import AsyncCompletions
 from config.config import Settings
 from custom.deepseek_official_http_transport import DeepSeekOfficialHttpTransport
 from custom.model_transport import ModelTransportError
-from custom.official_http_client import OfficialHttpCompletion, OfficialHttpToolCall
-from models.generation import ModelRequestContext
-from services.multi_step_generation.core import model_adapter
-from services.multi_step_generation.core.model_adapter import PlatformChatClient
 
 
 def _settings(**overrides: object) -> Settings:
@@ -262,54 +258,3 @@ async def test_nonstandard_endpoint_requires_legacy_http_mode(use_sdk):
         else:
             assert await transport.generate([]) == "result"
             assert request_count == 1
-
-
-@pytest.mark.asyncio
-async def test_platform_chat_client_reuses_official_http_api_key_for_tool_calls(monkeypatch):
-    settings = _settings(
-        openai_master_client="deepseek_official_http",
-        model_queue_timeout_seconds=1.0,
-        model_request_timeout_seconds=1.0,
-    )
-    captured: dict[str, object] = {}
-
-    async def fake_request_official_http(**kwargs):
-        captured.update(kwargs)
-        return OfficialHttpCompletion(
-            tool_calls=(
-                OfficialHttpToolCall(
-                    id="call-1",
-                    name="load_skill",
-                    arguments='{"resourceId":"instructions"}',
-                ),
-            ),
-            finish_reason="tool_calls",
-        )
-
-    monkeypatch.setattr(model_adapter, "request_official_http", fake_request_official_http)
-    client = PlatformChatClient(
-        settings,
-        ModelRequestContext(
-            session_id="s1",
-            interaction_id="i1",
-            device_id="d1",
-            country_code="CN",
-            app_version="1.0",
-            app_name="debug",
-        ),
-        thinking_mode="disable",
-        request_timeout=1.0,
-    )
-
-    completion = await client.complete(
-        [{"role": "user", "content": "create a card"}],
-        tools=[{"type": "function", "function": {"name": "load_skill"}}],
-        tool_choice="auto",
-        max_tokens=128,
-        enable_thinking=False,
-    )
-
-    assert completion.tool_calls[0].name == "load_skill"
-    assert captured["api_key"] == "test-key"
-    assert captured["url"] == "https://api.deepseek.com/chat/completions"
-    assert captured["thinking_enabled"] is False

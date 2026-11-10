@@ -9,10 +9,10 @@ from typing import Any
 
 
 def uses_post_layout_theme(
-    operation: str, *, template_source: bool = False, jsx_source: bool = False,
+    operation: str, *, template_source: bool = False,
 ) -> bool:
     """共享处理器不代表同一路线；只有融合模型产物允许后置主题。"""
-    return operation == "generateWidgetCardCompactDsl" and not (template_source or jsx_source)
+    return operation == "generateWidgetCardCompactDsl" and not template_source
 
 
 COLOR_KEYS = frozenset(

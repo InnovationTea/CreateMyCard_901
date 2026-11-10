@@ -140,7 +140,6 @@ def _configure(monkeypatch, callback):
     monkeypatch.setattr(settings, "enable_a2ui_model_mock", False)
     monkeypatch.setattr(settings, "enable_card_template", False)
     monkeypatch.setattr(settings, "enable_widget_directive_commands", False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     monkeypatch.setattr(A2UIModelClient, "generate", callback)
 
     def unexpected_save(*_args, **_kwargs):

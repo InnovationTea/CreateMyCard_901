@@ -434,11 +434,6 @@ async def test_compact_mock_flow_records_intermediate_artifacts(
     monkeypatch.setattr(settings, "WORKSPACE_ROOT", tmp_path / "workspace")
     monkeypatch.setattr(
         WidgetGenerationService,
-        "_enable_jsx_generation",
-        lambda _self: False,
-    )
-    monkeypatch.setattr(
-        WidgetGenerationService,
         "_enable_card_template",
         lambda _self: False,
     )
@@ -505,11 +500,6 @@ async def test_compact_flow_does_not_write_trace_when_disabled(
     monkeypatch.setattr(settings, "WORKSPACE_ROOT", tmp_path / "workspace")
     monkeypatch.setattr(
         WidgetGenerationService,
-        "_enable_jsx_generation",
-        lambda _self: False,
-    )
-    monkeypatch.setattr(
-        WidgetGenerationService,
         "_enable_card_template",
         lambda _self: False,
     )
@@ -545,11 +535,6 @@ async def test_upload_failure_keeps_trace_terminal_state(
     monkeypatch.setattr(settings, "generation_trace_root", tmp_path / "traces")
     monkeypatch.setattr(settings, "enable_a2ui_model_mock", True)
     monkeypatch.setattr(settings, "WORKSPACE_ROOT", tmp_path / "workspace")
-    monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
-        lambda _self: False,
-    )
     monkeypatch.setattr(
         WidgetGenerationService,
         "_enable_card_template",
@@ -631,11 +616,6 @@ async def test_plan_contract_retry_has_independent_trace_counts(
 
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
     monkeypatch.setattr(processor, "process", process)
-    monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
-        lambda _self: False,
-    )
     monkeypatch.setattr(
         WidgetGenerationService,
         "_enable_card_template",
@@ -736,11 +716,6 @@ async def test_quality_repair_records_prompt_model_and_revalidation(
 
     monkeypatch.setattr(processor, "process", process)
     monkeypatch.setattr(A2UIModelClient, "generate_repair", repair)
-    monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
-        lambda _self: False,
-    )
     monkeypatch.setattr(
         WidgetGenerationService,
         "_enable_card_template",

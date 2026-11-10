@@ -87,8 +87,9 @@ async def test_service_passes_warning_evidence_to_interface_retry_context(
         "enable_ids_mock": True,
     }.items():
         monkeypatch.setattr(settings, name, value)
-    for name in ("_enable_card_template", "_enable_jsx_generation"):
-        monkeypatch.setattr(WidgetGenerationService, name, staticmethod(lambda: False))
+    monkeypatch.setattr(
+        WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False),
+    )
     formats = []
     source = '\n'.join([
         '["root","Layout",{"layout":"S-title-content"},["title","content"]]',
@@ -182,8 +183,9 @@ async def test_static_service_recovery_preserves_unapproved_missing_must(monkeyp
         "enable_static_content_generation_policy": True, "enable_ids_mock": True,
     }.items():
         monkeypatch.setattr(settings, name, value)
-    for name in ("_enable_card_template", "_enable_jsx_generation"):
-        monkeypatch.setattr(WidgetGenerationService, name, staticmethod(lambda: False))
+    monkeypatch.setattr(
+        WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False),
+    )
 
     details = ["完整的必要说明" * 12, "周二开门", "周三开门"]
     names = ["对象甲", "对象乙", "对象丙"]

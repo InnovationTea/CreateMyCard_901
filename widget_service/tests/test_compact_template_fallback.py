@@ -24,7 +24,6 @@ from services.widget_generation_service import WidgetGenerationService
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("jsx_enabled", [False, True])
 @pytest.mark.parametrize("repair_enabled", [False, True])
 @pytest.mark.parametrize(
     "failure",
@@ -33,7 +32,7 @@ from services.widget_generation_service import WidgetGenerationService
      "fusion_repair", "fusion_exhausted", "empty_recovers", "empty_exhausted"],
 )
 async def test_template_attempt_falls_back_to_fresh_fusion(
-    monkeypatch, failure, repair_enabled, jsx_enabled,
+    monkeypatch, failure, repair_enabled,
 ) -> None:
     calls: list[str] = []
     processed: list[tuple[str, bool]] = []
@@ -54,9 +53,6 @@ async def test_template_attempt_falls_back_to_fresh_fusion(
     monkeypatch.setattr(service_module, "get_settings", lambda: settings)
     monkeypatch.setattr("custom.a2ui_model_client.get_settings", lambda: settings)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: True)
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", lambda _self: jsx_enabled,
-    )
 
     async def template(generator, task_spec, card_spec, _bindings):
         calls.append("template")
@@ -182,9 +178,6 @@ async def test_template_attempt_falls_back_to_fresh_fusion(
         if event == "template.fallback":
             fallback_events.append(copy.deepcopy(kwargs))
 
-    def unexpected_jsx():
-        pytest.fail("template failure must bypass JSX")
-
     monkeypatch.setattr(TemplateSourceGenerator, "__call__", template)
     monkeypatch.setattr(UnifiedModelClient, "generate", generate_body)
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
@@ -196,7 +189,6 @@ async def test_template_attempt_falls_back_to_fresh_fusion(
     monkeypatch.setattr(service_module.ArtifactValidator, "validate", validate)
     monkeypatch.setattr(service_module.ArtifactValidator, "validate_layout", validate)
     monkeypatch.setattr("services.post_layout_theme.theme_artifact", theme)
-    monkeypatch.setattr(service_module, "JsxA2UIBridge", unexpected_jsx)
     monkeypatch.setattr(service_module, "trace_record", trace_record)
     monkeypatch.setattr(ArtifactStore, "save", save)
     # 本测试使用占位 DSL，序列化由独立测试覆盖，这里只验证路线和上下文隔离。

@@ -98,7 +98,6 @@ from services.generation_trace_recorder import (
     trace_span,
     trace_step,
 )
-from services.multi_step_generation.core.bridge import JsxA2UIBridge
 from services.operational_logging import exception_summary
 from services.protocol_registry import (
     A2UI_FORM_PROTOCOL_PROFILE_ID,
@@ -322,7 +321,6 @@ class WidgetGenerationService:
         *,
         policy: GenerationRoutePolicy,
         before_model_call: Callable[[WidgetSize], Awaitable[None]] | None = None,
-        try_jsx: bool = False,
         template_source_generator: TemplateSourceGenerator | None = None,
         need_fallback: bool = True,
         single_step_context: dict | None = None,
@@ -619,7 +617,6 @@ class WidgetGenerationService:
                     errorCode=ErrorCode.VALIDATION_FAILED.value,
                 )
             template_source_generator = None
-            try_jsx = False
             single_step_fallback_enabled = False
         trace_record(
             "content_policy.selected",
@@ -893,7 +890,6 @@ class WidgetGenerationService:
             ),
         )
         latest_processing_result = DslProcessingResult(source_dsl="")
-        source_generated_by_jsx = False
         source_generated_by_template = False
         fusion_validation_task = processing_context.task_spec
         if display_task is not task_spec:
@@ -912,14 +908,12 @@ class WidgetGenerationService:
                 return False
             return uses_post_layout_theme(
                 policy.operation, template_source=source_generated_by_template,
-                jsx_source=source_generated_by_jsx,
             )
 
         direct_fusion_request = (
             not policy.single_step
             and uses_post_layout_theme(policy.operation)
             and template_source_generator is None
-            and not try_jsx
         )
         expandable_request = (
             generation_mode == "create"
@@ -1413,12 +1407,11 @@ class WidgetGenerationService:
             nonlocal compact_agent_messages
             nonlocal effective_generation_prompt
             nonlocal model_call_phase
-            nonlocal source_generated_by_jsx, source_generated_by_template
+            nonlocal source_generated_by_template
             nonlocal validated_template_source, latest_processing_result
-            source_generated_by_jsx = False
             source_generated_by_template = False
             original_small_display_roles.clear()
-            source_fallback_started = template_source_generator is not None or try_jsx
+            source_fallback_started = template_source_generator is not None
             if source_fallback_started:
                 trace_phase("dsl")
             if before_model_call is not None and not defer_size_notification:
@@ -1465,8 +1458,6 @@ class WidgetGenerationService:
                                 "reason": str(exc),
                             },
                         )
-                    elif try_jsx:
-                        fallback = "jsx"
                     else:
                         fallback = "original_protocol_flow" if need_fallback else "none"
                     logger.info(
@@ -1478,36 +1469,6 @@ class WidgetGenerationService:
                     if fallback == "none":
                         raise A2UIModelGenerationError(
                             "Template source generation failed without fallback"
-                        ) from exc
-            if try_jsx and not template_fallback_to_fusion:
-                try:
-                    logger.info(f"{_MODULE} jsx_generation_started operation={policy.operation}")
-                    bridge = JsxA2UIBridge()
-                    bridge_result = await bridge.generate(task_spec, card_spec.suggestSize)
-                    a2ui_jsonl = "\n".join(
-                        json.dumps(msg, ensure_ascii=False, separators=(",", ":"))
-                        for msg in bridge_result.a2ui_messages
-                    )
-                    generated_dsl = require_generated_dsl(a2ui_jsonl)
-                    source_generated_by_jsx = True
-                    logger.info(
-                        f"{_MODULE} jsx_generation_completed operation={policy.operation} "
-                        f"component={bridge_result.component_name} "
-                        f"turns={bridge_result.turns} elapsed={bridge_result.elapsed_seconds}s"
-                    )
-                    return generated_dsl
-                except Exception as exc:
-                    fallback = "original_protocol_flow" if need_fallback else "none"
-                    logger.info(
-                        f"{_MODULE} jsx_generation_failed "
-                        f"operation={policy.operation} fallback={fallback} "
-                        f"reason={type(exc).__name__} "
-                        f"detail={json_for_log(str(exc))}"
-                    )
-                    report_ops_metrics(body={"templateProposal": 0})
-                    if not need_fallback:
-                        raise A2UIModelGenerationError(
-                            "JSX generation failed without fallback"
                         ) from exc
             logger.info(f"{_MODULE} model_source_generation_started operation={policy.operation}")
             uses_compact_plan = (
@@ -1779,17 +1740,6 @@ class WidgetGenerationService:
             validation_attempts = {"validation": evaluation_attempt}
             if quality_repair_attempt_count > 0:
                 validation_attempts["qualityRepair"] = quality_repair_attempt_count
-            # JSX 路径：agent 内部已有编译、验证和重试；仅映射交付资源，跳过工程质量流程。
-            if source_generated_by_jsx:
-                logger.info(
-                    f"{_MODULE} artifact_validation_skipped operation={policy.operation} "
-                    "reason=jsx_internal_validation"
-                )
-                latest_processing_result = DslProcessingResult(
-                    source_dsl=source_dsl,
-                    standard_dsl=asset_mapper.rewrite_standard(source_dsl),
-                )
-                return []
             processing_context_for_source = replace(
                 processing_context,
                 task_spec=(
@@ -2317,10 +2267,7 @@ class WidgetGenerationService:
         design_token = None
         if policy.stores_design_token:
             design_token = model_client.extract_genui_payload(source_dsl)
-            preserve_compact_source = (
-                policy.processor_kind == DslProcessorKind.DESIGN_COMPACT
-                and not source_generated_by_jsx
-            )
+            preserve_compact_source = policy.processor_kind == DslProcessorKind.DESIGN_COMPACT
             if preserve_compact_source:
                 design_token = serialize_compact_dsl_source(
                     latest_processing_result.source_dsl,
@@ -2621,26 +2568,21 @@ class WidgetGenerationService:
             return await self._generate_widget_card_with_policy(
                 request, policy, before_model_call=before_model_call,
             )
-        # JSX 开关独立于模板开关
         try_template = self._enable_card_template()
-        try_jsx = self._enable_jsx_generation()
-        need_fallback = not try_jsx
         template_source_generator = TemplateSourceGenerator() if try_template else None
         if before_model_call is None:
             return await self._generate_widget_card_with_policy(
                 request,
                 policy,
-                try_jsx=try_jsx,
                 template_source_generator=template_source_generator,
-                need_fallback=need_fallback,
+                need_fallback=True,
             )
         return await self._generate_widget_card_with_policy(
             request,
             policy,
             before_model_call=before_model_call,
-            try_jsx=try_jsx,
             template_source_generator=template_source_generator,
-            need_fallback=need_fallback,
+            need_fallback=True,
         )
 
     async def generate_widget_card_compact_dsl(
@@ -2720,12 +2662,11 @@ class WidgetGenerationService:
                 request,
                 policy,
                 before_model_call=before_model_call,
-                try_jsx=False if is_edit else self._enable_jsx_generation(),
                 template_source_generator=(
                     TemplateSourceGenerator()
                     if not is_edit and self._enable_card_template() else None
                 ),
-                need_fallback=is_edit or not self._enable_jsx_generation(),
+                need_fallback=True,
             )
         except BaseException as exc:
             if trace_token is not None:
@@ -2826,7 +2767,6 @@ class WidgetGenerationService:
         policy: GenerationRoutePolicy,
         *,
         before_model_call: Callable[[WidgetSize], Awaitable[None]] | None = None,
-        try_jsx: bool = False,
         template_source_generator: TemplateSourceGenerator | None = None,
         need_fallback: bool = True,
         single_step_context: dict | None = None,
@@ -2837,11 +2777,8 @@ class WidgetGenerationService:
             from services.widget_edit_service import WidgetEditService
 
             return await WidgetEditService(self).generate(request, policy, before_model_call)
-        if is_edit:
-            try_jsx = False
         if is_edit and get_settings().enable_single_step_widget_edit:
             policy = self._single_step_policy(policy, is_edit=True)
-            try_jsx = False
             template_source_generator = None
             need_fallback = True
             trace_record(
@@ -2864,7 +2801,6 @@ class WidgetGenerationService:
                 profiled_request,
                 policy=policy,
                 before_model_call=before_model_call,
-                try_jsx=try_jsx,
                 need_fallback=need_fallback,
                 **extra_context,
             )
@@ -2881,7 +2817,6 @@ class WidgetGenerationService:
             profiled_request,
             policy=policy,
             before_model_call=before_model_call,
-            try_jsx=try_jsx,
             template_source_generator=template_source_generator,
             need_fallback=need_fallback,
             **extra_context,
@@ -3180,14 +3115,6 @@ class WidgetGenerationService:
                 createdAt=int(time.time() * 1000),
             ),
         )
-
-    def _enable_jsx_generation(self) -> bool:
-        """是否启用 JSX-to-A2UI 生成式路径。
-
-        该开关由 spec_records.yaml 中的 enable_jsx_generation 控制。
-        """
-        settings = get_settings()
-        return settings.CONFIG.get("enable_jsx_generation") == "true"
 
     def _enable_card_template(self) -> bool:
         """Whether use template for UI generation."""

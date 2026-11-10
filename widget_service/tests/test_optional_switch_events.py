@@ -372,7 +372,6 @@ async def test_registered_optional_switch_completes_service_without_repair(
     monkeypatch.setattr(settings, "enable_design_compact_runtime_prompt_context", False)
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     monkeypatch.setattr(ArtifactStore, "save", lambda *_args: ArtifactSaveResult(
         artifactUrl="https://artifact.test/optional-switch", artifactDigest="sha256:test",
     ))

@@ -473,7 +473,7 @@ class DebugAgentSession:
     def _default_model_client(
         self, request_context: ModelRequestContext, settings: Settings
     ) -> Any:
-        from services.multi_step_generation.core.model_adapter import PlatformChatClient
+        from .platform_chat_client import PlatformChatClient
 
         provider = settings.openai_master_client
         allowed = {"deepseek_platform", "llmclient", "deepseek_official_http"}

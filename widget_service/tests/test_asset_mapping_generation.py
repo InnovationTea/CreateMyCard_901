@@ -3,7 +3,6 @@
 import asyncio
 import json
 from dataclasses import replace
-from types import SimpleNamespace
 
 import pytest
 
@@ -11,11 +10,7 @@ from api.schemas import GenerateWidgetCardRequest
 from config.config import get_settings
 from core.errors import GenerationStatus
 from custom.a2ui_model_client import A2UIModelClient
-from services import widget_generation_service
-from services.artifact_store import ArtifactStore
-from services.asset_url_mapper import AssetUrlMapper
 from services.compact_dsl_a2ui_converter import convert_compact_dsl_to_a2ui
-from services.multi_step_generation.core.bridge import JsxA2UIBridge
 from services.source_artifact_repository import SourceArtifactRepository
 from services.template_generation import TemplateSourceGenerator
 from services.validator import ArtifactValidator
@@ -97,102 +92,10 @@ def storage(tmp_path, monkeypatch, isolated_theme_stage):
         WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False)
     )
     monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: False)
-    )
-    monkeypatch.setattr(
         "services.artifact_store.file_obs",
         UploadFileOSMS(base_url="https://artifact.test", mock_storage_dir=tmp_path / "mock_obs"),
     )
     return tmp_path / "mock_obs"
-
-
-@pytest.mark.parametrize("kind", ["compact_dsl", "a2ui_form"])
-@pytest.mark.parametrize("validation_enabled", [True, False])
-@pytest.mark.parametrize("mapping_hit", [True, False])
-@pytest.mark.asyncio
-async def test_jsx_only_maps_resources_without_engine_quality_flow(
-    storage, monkeypatch, kind, validation_enabled, mapping_hit
-):
-    settings = get_settings()
-    monkeypatch.setattr(settings, "enable_artifact_validation", validation_enabled)
-    monkeypatch.setattr(settings, "enable_validation_failure_retry", True)
-    if not mapping_hit:
-        monkeypatch.setattr(settings, "asset_src_url_mapping", {})
-    standard = convert_compact_dsl_to_a2ui(design_source(), size="2x4")
-    jsx_calls = []
-
-    def forbidden(*_args, **_kwargs):
-        pytest.fail("JSX must not enter engineering processor, validator or model repair")
-
-    async def jsx(_bridge, task, _size):
-        jsx_calls.append(task)
-        return SimpleNamespace(
-            a2ui_messages=json_rows(standard),
-            component_name="Test", turns=1, elapsed_seconds=0.0,
-        )
-
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: True)
-    )
-    monkeypatch.setattr(JsxA2UIBridge, "generate", jsx)
-    monkeypatch.setattr(
-        widget_generation_service, "get_dsl_processor",
-        lambda _kind: SimpleNamespace(process=forbidden),
-    )
-    monkeypatch.setattr(ArtifactValidator, "validate", forbidden)
-    monkeypatch.setattr(A2UIModelClient, "generate", forbidden)
-    result = await getattr(WidgetGenerationService(), f"generate_widget_card_{kind}")(request())
-    assert result.status == GenerationStatus.SUCCESS
-    assert len(jsx_calls) == 1
-    source = await asyncio.to_thread(SourceArtifactRepository().load, result.artifactUrl)
-    images = [
-        item for item in components(source.artifact.genui) if item.get("component") == "Image"
-    ]
-    assert images
-    for image in images:
-        assert image.get("src") == (URL if mapping_hit else SRC)
-
-
-@pytest.mark.parametrize("kind", ["compact_dsl", "a2ui_form"])
-@pytest.mark.asyncio
-async def test_jsx_mapping_failure_does_not_trigger_engine_repair_or_save(
-    storage, monkeypatch, kind
-):
-    monkeypatch.setattr(get_settings(), "enable_artifact_validation", True)
-    monkeypatch.setattr(get_settings(), "enable_validation_failure_retry", True)
-    standard = convert_compact_dsl_to_a2ui(design_source(), size="2x4")
-    mapping_error = ValueError("resource mapping failed")
-    jsx_calls = []
-
-    def forbidden(*_args, **_kwargs):
-        pytest.fail("JSX resource mapping failure must not trigger engineering repair or save")
-
-    def mapping_failed(*_args, **_kwargs):
-        raise mapping_error
-
-    async def jsx(_bridge, _task, _size):
-        jsx_calls.append(True)
-        return SimpleNamespace(
-            a2ui_messages=json_rows(standard),
-            component_name="Test", turns=1, elapsed_seconds=0.0,
-        )
-
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: True)
-    )
-    monkeypatch.setattr(JsxA2UIBridge, "generate", jsx)
-    monkeypatch.setattr(AssetUrlMapper, "rewrite_standard", mapping_failed)
-    monkeypatch.setattr(
-        widget_generation_service, "get_dsl_processor",
-        lambda _kind: SimpleNamespace(process=forbidden),
-    )
-    monkeypatch.setattr(ArtifactValidator, "validate", forbidden)
-    monkeypatch.setattr(A2UIModelClient, "generate", forbidden)
-    monkeypatch.setattr(ArtifactStore, "save", forbidden)
-    with pytest.raises(ValueError) as raised:
-        await getattr(WidgetGenerationService(), f"generate_widget_card_{kind}")(request())
-    assert raised.value is mapping_error
-    assert len(jsx_calls) == 1
 
 
 @pytest.mark.parametrize(
@@ -201,8 +104,6 @@ async def test_jsx_mapping_failure_does_not_trigger_engine_repair_or_save(
         ("compact_dsl", "model"),
         ("a2ui_form", "model"),
         ("compact_dsl", "template"),
-        ("compact_dsl", "jsx"),
-        ("a2ui_form", "jsx"),
     ],
 )
 @pytest.mark.parametrize("validation_enabled", [True, False])
@@ -236,15 +137,6 @@ async def test_generation_maps_before_validation_and_saves_separate_sources(
         inputs.append(task.model_dump_json())
         return token
 
-    async def jsx(_bridge, task, _size):
-        inputs.append(task.model_dump_json())
-        return SimpleNamespace(
-            a2ui_messages=[json.loads(line) for line in standard.splitlines()],
-            component_name="Test",
-            turns=1,
-            elapsed_seconds=0.0,
-        )
-
     def validate(validator, artifact, _profile):
         validated.append(artifact.genui)
         assert validator.asset_src_url_mapping == {SRC: URL}
@@ -252,17 +144,11 @@ async def test_generation_maps_before_validation_and_saves_separate_sources(
 
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
     monkeypatch.setattr(TemplateSourceGenerator, "__call__", template)
-    monkeypatch.setattr(JsxA2UIBridge, "generate", jsx)
     monkeypatch.setattr(ArtifactValidator, "validate", validate)
     monkeypatch.setattr(
         WidgetGenerationService,
         "_enable_card_template",
         staticmethod(lambda: backend == "template"),
-    )
-    monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
-        staticmethod(lambda: backend == "jsx"),
     )
 
     result = await getattr(WidgetGenerationService(), f"generate_widget_card_{kind}")(request())
@@ -282,12 +168,12 @@ async def test_generation_maps_before_validation_and_saves_separate_sources(
     assert images
     for item in images:
         assert item.get("src") == URL
-    if backend != "jsx" and validation_enabled:
+    if validation_enabled:
         assert len(validated) == 1
         assert json_rows(validated[0]) == json_rows(source.artifact.genui)
     else:
         assert not validated
-    if kind == "compact_dsl" and backend != "jsx":
+    if kind == "compact_dsl":
         assert source.design_token is not None
         assert SRC in source.design_token
         assert URL not in source.design_token

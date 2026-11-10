@@ -212,7 +212,6 @@ async def test_registered_pure_actions_complete_without_quality_repair(monkeypat
     monkeypatch.setattr(settings, "enable_design_compact_runtime_prompt_context", False)
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     monkeypatch.setattr(ArtifactStore, "save", lambda *_args: ArtifactSaveResult(
         artifactUrl="https://artifact.test/pure-actions", artifactDigest="sha256:test",
     ))

@@ -61,9 +61,6 @@ async def test_missing_unit_uses_quality_budget_before_theme(
     monkeypatch.setattr(
         WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False)
     )
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: False)
-    )
     calls = []
     repair_prompts = []
 
@@ -125,6 +122,7 @@ async def test_missing_unit_uses_quality_budget_before_theme(
         candidateDataBindings=[{
             "capabilityId": capability_id, "arguments": arguments,
             "writeResultTo": data_root,
+            "candidateOutputFields": [data_path.removeprefix(data_root)],
         }],
     )
     response = await WidgetGenerationService().generate_widget_card_compact_dsl(request)

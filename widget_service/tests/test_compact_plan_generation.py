@@ -100,11 +100,6 @@ async def test_real_compact_route_runs_plan_before_dsl_without_plan_fewshots(
         staticmethod(lambda: False),
     )
     monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
-        staticmethod(lambda: False),
-    )
-    monkeypatch.setattr(
         ArtifactStore,
         "save",
         lambda _store, _artifact: SimpleNamespace(
@@ -236,11 +231,6 @@ async def test_runtime_plan_mode_repairs_missing_composition_before_dsl(
     monkeypatch.setattr(
         WidgetGenerationService,
         "_enable_card_template",
-        staticmethod(lambda: False),
-    )
-    monkeypatch.setattr(
-        WidgetGenerationService,
-        "_enable_jsx_generation",
         staticmethod(lambda: False),
     )
     monkeypatch.setattr(

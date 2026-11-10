@@ -19,13 +19,6 @@ from services.compact_dsl_a2ui_converter import (
     convert_compact_dsl_to_a2ui,
     repair_compact_dsl_binding_paths,
 )
-from services.multi_step_generation.jsx_to_a2ui.catalog.bindings import (
-    BINDABLE_PROP_TYPES,
-)
-from services.multi_step_generation.jsx_to_a2ui.catalog.contracts import (
-    collect_jsx_component_errors,
-)
-from services.multi_step_generation.jsx_to_a2ui.parser.jsx_ast import JSXElement
 
 
 def _serialize(rows: list[list[object]]) -> str:
@@ -301,20 +294,6 @@ def test_data_display_supporting_text_accepts_dynamic_binding() -> None:
 
     assert path_errors == []
     assert expression_errors == []
-    assert "supportingText" in BINDABLE_PROP_TYPES["DataDisplay"]
-
-    jsx_errors = collect_jsx_component_errors(
-        JSXElement(
-            "DataDisplay",
-            {
-                "label": "天气预警",
-                "value": "大风蓝色预警",
-                "supportingText": "10:30 更新",
-                "variant": "textConclusion",
-            },
-        )
-    )
-    assert jsx_errors == []
 
 
 def test_data_display_ignores_legacy_font_size_and_uses_text_recipe() -> None:

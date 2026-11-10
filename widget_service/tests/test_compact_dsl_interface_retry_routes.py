@@ -296,7 +296,6 @@ def test_real_generation_pipeline_retries_to_valid_artifact(monkeypatch, tmp_pat
     monkeypatch.setattr(settings, "enable_artifact_validation", True)
     monkeypatch.setattr(settings, "enable_design_compact_runtime_prompt_context", False)
     monkeypatch.setattr(settings, "enable_card_template", False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     monkeypatch.setattr(artifact_store, "file_obs", UploadFileOSMS(
         base_url="https://artifact.test", mock_storage_dir=tmp_path / "mock_obs",
     ))

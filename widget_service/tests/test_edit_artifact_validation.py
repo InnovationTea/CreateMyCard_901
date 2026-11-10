@@ -173,9 +173,6 @@ def generation_probe(tmp_path, monkeypatch):
         WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False),
     )
     monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: False),
-    )
-    monkeypatch.setattr(
         "services.artifact_store.file_obs",
         UploadFileOSMS(
             base_url="https://artifact.test", mock_storage_dir=tmp_path / "mock_obs",

@@ -398,9 +398,6 @@ async def test_real_plan_dsl_pipeline_keeps_call_budget_and_click_presentation(
     monkeypatch.setattr(
         WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False),
     )
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: False),
-    )
     monkeypatch.setattr(ArtifactStore, "save", lambda _self, _artifact: SimpleNamespace(
         artifactUrl="https://artifact.test/whole-card", artifactDigest="sha256:whole-card",
     ))

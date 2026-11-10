@@ -37,7 +37,7 @@ def service_fingerprints(cloud_root: Path) -> dict[str, Any]:
         for path in sorted(root.rglob("*")):
             if not path.is_file() or path.suffix not in suffixes:
                 continue
-            if "tests" in path.parts or "multi_step_generation" in path.parts:
+            if "tests" in path.parts:
                 continue
             digest.update(path.relative_to(cloud_root).as_posix().encode("utf-8"))
             digest.update(b"\0")

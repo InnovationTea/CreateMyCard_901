@@ -262,7 +262,6 @@ def single_step_run(monkeypatch):
     monkeypatch.setattr(get_dsl_processor(DslProcessorKind.DESIGN_COMPACT), "process", process)
     monkeypatch.setattr(ArtifactStore, "save", save)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     monkeypatch.setattr(CompactRepairStrategyTracker, "next_directive", lambda *_a, **_k:
                         SimpleNamespace(retryable=True, to_prompt_payload=lambda: {
                             "category": "layout_capacity", "scope": "sublayout",
@@ -386,7 +385,6 @@ async def test_all_edit_entries_use_expanded_source_without_token(
     monkeypatch.setattr("services.source_artifact_repository.SourceArtifactRepository.load",
                         lambda *_args: source)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: True)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: True)
     state.standard = _standard(font_size=20)
     state.envelope = envelope
     state.calls.clear()

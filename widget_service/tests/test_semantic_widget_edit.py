@@ -248,7 +248,7 @@ def edit_run(source, monkeypatch):
                                artifactDigest="sha256:new")
 
     def forbidden(*_args, **_kwargs):
-        pytest.fail("二次编辑不得调用首次生成、模板、JSX 或主题")
+        pytest.fail("二次编辑不得调用首次生成、模板或主题")
 
     monkeypatch.setattr(SourceArtifactRepository, "load", lambda *_args: loaded)
     monkeypatch.setattr(A2UIModelClient, "generate", generate)
@@ -258,7 +258,6 @@ def edit_run(source, monkeypatch):
     monkeypatch.setattr("services.template_generation.TemplateSourceGenerator.__init__", forbidden)
     monkeypatch.setattr("services.post_layout_theme.theme_artifact", forbidden)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: True)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: True)
     return state
 
 

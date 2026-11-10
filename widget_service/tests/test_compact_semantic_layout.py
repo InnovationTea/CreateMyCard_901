@@ -573,8 +573,6 @@ async def test_online_artifact_saves_valid_semantic_source_after_json_repair(
     monkeypatch.setattr(settings, "enable_artifact_validation", False)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template",
                         staticmethod(lambda: False))
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation",
-                        staticmethod(lambda: False))
     monkeypatch.setattr(A2UIModelClient, "generate", lambda *_args, **_kwargs: broken)
 
     def save(store, _artifact):

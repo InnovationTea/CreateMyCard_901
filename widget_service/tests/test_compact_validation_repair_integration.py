@@ -195,9 +195,6 @@ async def test_online_restores_nested_facts_before_formatting_and_preserves_reco
     monkeypatch.setattr(
         WidgetGenerationService, "_enable_card_template", staticmethod(lambda: False)
     )
-    monkeypatch.setattr(
-        WidgetGenerationService, "_enable_jsx_generation", staticmethod(lambda: False)
-    )
     # 注入已映射事实，验证真实在线入口的还原/格式化先后顺序；校验仍执行真实规则。
     mapper = AssetUrlMapper({SRC: URL}, {SRC})
     monkeypatch.setattr(widget_generation_service, "AssetUrlMapper", lambda *_args: mapper)

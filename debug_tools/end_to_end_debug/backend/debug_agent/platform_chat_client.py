@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 import websockets
-
 from config.config import Settings
 from custom.official_http_client import request_official_http
 from models.generation import ModelRequestContext
@@ -302,7 +301,7 @@ class _Chat:
 
 
 class PlatformChatClient:
-    """仅在 multi_step_generation 内使用的平台 WS/tool_choice 适配器。"""
+    """调试 Agent 使用的平台 WS/tool_choice 适配器。"""
 
     def __init__(
         self,

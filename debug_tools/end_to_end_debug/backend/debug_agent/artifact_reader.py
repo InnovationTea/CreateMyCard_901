@@ -120,16 +120,10 @@ def _source_repository_module() -> Any:
     original_sys_path = list(sys.path)
     repo_root = _repo_root()
     cloud_root = repo_root / "cloud"
-    conflicting_path = cloud_root / "services" / "multi_step_generation"
     cloud_root_text = str(cloud_root)
     if cloud_root_text not in sys.path:
         sys.path.insert(0, cloud_root_text)
     try:
-        sys.path[:] = [
-            item
-            for item in sys.path
-            if _resolved_path(item) != conflicting_path.resolve()
-        ]
         for module_name in module_names:
             try:
                 return importlib.import_module(module_name)
@@ -140,15 +134,6 @@ def _source_repository_module() -> Any:
     if last_error is not None:
         raise last_error
     raise ImportError("source artifact repository is unavailable")
-
-
-def _resolved_path(value: str) -> Path | None:
-    if not value:
-        return None
-    try:
-        return Path(value).resolve()
-    except (OSError, RuntimeError):
-        return None
 
 
 def _source_repository_type() -> Any:

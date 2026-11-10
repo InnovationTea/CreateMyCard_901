@@ -24,6 +24,7 @@ from models.service import ArtifactSaveResult
 from services import widget_generation_service as widget_generation_service_module
 from services.artifact_store import ArtifactStore
 from services.card_validation import validate_card
+from services.compact_dsl_a2ui_converter import convert_compact_dsl_to_a2ui
 from services.fusion_ball_expander import (
     FUSION_BALL_MIN_PRD_VERSION_CONFIG,
 )
@@ -8833,6 +8834,17 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
     model_repair_calls = 0
     saved_design_tokens: list[str | None] = []
     source_permissions: list[bool] = []
+    is_compact = policy_factory().operation == "generateWidgetCardCompactDsl"
+    # 使用可序列化的 Compact 源，保留真实的交付来源保存检查。
+    model_rows = [
+        ["root", "Layout", {"layout": "S-center"}, ["content"]],
+        ["content", "DataDisplay", {
+            "label": "天气", "value": "26°C", "supportingText": "晴",
+        }],
+    ]
+    model_source = "\n".join(json.dumps(row, ensure_ascii=False) for row in model_rows)
+    standard_source = convert_compact_dsl_to_a2ui(model_source, size="2x2")
+    themed_sources: list[str] = []
 
     class ModelClient:
         model_failure_retry_count = 0
@@ -8841,12 +8853,12 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
         async def generate(self, *_args: Any, **_kwargs: Any) -> str:
             nonlocal model_generate_calls
             model_generate_calls += 1
-            return "generic-initial-source"
+            return model_source
 
         async def generate_repair(self, *_args: Any, **_kwargs: Any) -> str:
             nonlocal model_repair_calls
             model_repair_calls += 1
-            return "generic-repaired-source"
+            return model_source
 
         @staticmethod
         def extract_genui_payload(source_dsl: str) -> str:
@@ -8869,7 +8881,7 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
                 )
             return DslProcessingResult(
                 source_dsl=source_dsl,
-                standard_dsl="valid-a2ui",
+                standard_dsl=standard_source,
             )
 
     async def template_source_generator(*_args: Any, **_kwargs: Any) -> str:
@@ -8877,11 +8889,14 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
         template_call_count += 1
         return "template-invalid-source"
 
-    class RejectedJsxBridge:
-        def __init__(self) -> None:
-            pytest.fail("template source must take priority over JSX generation")
+    async def theme(artifact: Any, *_args: Any, **_kwargs: Any) -> Any:
+        # 本用例验证路线及保存边界，主题选择细节由主题专项覆盖。
+        assert artifact.genui == standard_source
+        themed_sources.append(artifact.genui)
+        return artifact
 
     async def save(store: ArtifactStore, _artifact: Any) -> ArtifactSaveResult:
+        assert themed_sources == [standard_source]
         saved_design_tokens.append(store.design_token)
         return ArtifactSaveResult(
             artifactUrl="https://artifact.test/template-repaired",
@@ -8906,11 +8921,6 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
     )
     monkeypatch.setattr(
         widget_generation_service_module,
-        "JsxA2UIBridge",
-        RejectedJsxBridge,
-    )
-    monkeypatch.setattr(
-        widget_generation_service_module,
         "get_dsl_processor",
         lambda kind: processor_kinds.append(kind) or Processor(),
     )
@@ -8919,32 +8929,46 @@ async def test_template_quality_failure_obeys_entry_fallback_policy(
         "validate",
         lambda _self, _artifact, _profile: [],
     )
+    monkeypatch.setattr("services.post_layout_theme.theme_artifact", theme)
     monkeypatch.setattr(ArtifactStore, "save", save)
 
     response = await WidgetGenerationService().generate_widget_card(
         _weather_request(),
         policy=policy_factory(),
-        try_jsx=True,
         template_source_generator=template_source_generator,
+        need_fallback=is_compact,
     )
 
-    assert response.status == GenerationStatus.SUCCESS
     assert template_call_count == 1
-    is_compact = policy_factory().operation == "generateWidgetCardCompactDsl"
-    expected_source = "generic-initial-source" if is_compact else "generic-repaired-source"
-    assert model_generate_calls == (1 if is_compact else 0)
-    assert model_repair_calls == (0 if is_compact else 1)
-    assert processed_sources == [
-        "template-invalid-source",
-        expected_source,
-    ]
+    assert model_repair_calls == 0
     assert processor_kinds == [DslProcessorKind.DESIGN_COMPACT]
-    assert saved_design_tokens == [expected_source]
-    assert source_permissions == [True, False]
+    if is_compact:
+        assert response.status == GenerationStatus.SUCCESS
+        assert model_generate_calls == 1
+        assert processed_sources == ["template-invalid-source", model_source]
+        assert len(saved_design_tokens) == 1
+        saved_source = saved_design_tokens[0]
+        assert saved_source is not None
+        assert [json.loads(line) for line in saved_source.splitlines()] == [
+            json.loads(line) for line in model_source.splitlines()
+        ]
+        assert source_permissions == [True, False]
+    else:
+        assert response.status == GenerationStatus.FAILED
+        assert response.errorCode == "VALIDATION_FAILED"
+        assert not response.artifactUrl
+        assert model_generate_calls == 0
+        assert processed_sources == ["template-invalid-source"]
+        assert saved_design_tokens == []
+        assert themed_sources == []
+        assert source_permissions == [True]
 
 
 @pytest.mark.asyncio
-async def test_terse_edit_is_rejected_before_template_source_request(monkeypatch):
+async def test_terse_edit_is_rejected_when_both_edit_routes_are_disabled(monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "enable_semantic_widget_edit", False)
+    monkeypatch.setattr(settings, "enable_single_step_widget_edit", False)
     request = _weather_request().model_copy(
         update={"sourceArtifactUrl": "https://artifact.test/source.md"}
     )

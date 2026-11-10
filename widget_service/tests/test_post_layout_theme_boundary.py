@@ -28,15 +28,14 @@ from services.widget_generation_service import WidgetGenerationService
 pytestmark = pytest.mark.usefixtures("existing_generation_policy")
 
 
-@pytest.mark.parametrize("operation,template,jsx,expected", [
-    ("generateWidgetCardCompactDsl", False, False, True),
-    ("generateWidgetCardCompactDsl", True, False, False),
-    ("generateWidgetCardCompactDsl", False, True, False),
-    ("generateWidgetCardTerseDslNested2", False, False, False),
-    ("generateWidgetCard", False, False, False),
+@pytest.mark.parametrize("operation,template,expected", [
+    ("generateWidgetCardCompactDsl", False, True),
+    ("generateWidgetCardCompactDsl", True, False),
+    ("generateWidgetCardTerseDslNested2", False, False),
+    ("generateWidgetCard", False, False),
 ])
-def test_only_actual_fusion_source_uses_theme(operation, template, jsx, expected):
-    assert uses_post_layout_theme(operation, template_source=template, jsx_source=jsx) == expected
+def test_only_actual_fusion_source_uses_theme(operation, template, expected):
+    assert uses_post_layout_theme(operation, template_source=template) == expected
 
 
 @pytest.mark.parametrize("context_flag", [False, True])
@@ -82,7 +81,6 @@ async def test_fusion_service_always_themes_after_colorless_layout(monkeypatch):
     monkeypatch.setattr(settings, "enable_artifact_validation", True)
     monkeypatch.setattr(settings, "enable_photo_background_theme", False)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda _self: False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda _self: False)
     calls = []
     layouts = []
     saved = []

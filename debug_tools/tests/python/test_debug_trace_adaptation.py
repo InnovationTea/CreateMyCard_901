@@ -274,7 +274,6 @@ async def test_real_fusion_pipeline_produces_importable_theme_trace(tmp_path, mo
     monkeypatch.setattr(settings, "enable_artifact_validation", True)
     monkeypatch.setattr(settings, "enable_photo_background_theme", False)
     monkeypatch.setattr(WidgetGenerationService, "_enable_card_template", lambda self: False)
-    monkeypatch.setattr(WidgetGenerationService, "_enable_jsx_generation", lambda self: False)
     source = '\n'.join([
         '["root","Layout",{"layout":"S-center"},["value"]]',
         '["value","DataDisplay",{"label":"静态卡片","value":"就绪","supportingText":"状态"}]',
