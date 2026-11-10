@@ -37,7 +37,8 @@ def test_success_instruction_survives_transport_without_changing_result(status, 
     assert "message" not in data
     instruction = data.get("agentInstruction")
     assert isinstance(instruction, str)
-    assert "无需且不得再次调用" in instruction
+    assert "无需且不得再次调用工具 generateWidgetCardCompactDsl" in instruction
+    assert "generateWidgetCardTerseDslNested2" not in instruction
     assert "只有用户后续明确" in instruction
     assert "不向用户展示" in instruction
     assert "优先按实际结果及本指引处理" in instruction

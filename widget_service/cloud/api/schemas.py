@@ -381,7 +381,7 @@ class GenerateWidgetCardResponse(BaseModel):
         instruction: str | None = None
         if self.status in (GenerationStatus.SUCCESS, GenerationStatus.DEGRADED):
             instruction = (
-                "已返回生成结果，本轮无需且不得再次调用生成接口。"
+                "已返回生成结果，本轮无需且不得再次调用工具 generateWidgetCardCompactDsl。"
                 "本轮卡片业务优先按实际结果及本指引处理；可忽略 notion 中与本指引冲突的"
                 "继续调用工具、仅输出 NO_REPLY 或禁止文本回复的通用提示。"
                 "允许只向用户回复一段简短文本，不必调用任何工具来完成回复。"
