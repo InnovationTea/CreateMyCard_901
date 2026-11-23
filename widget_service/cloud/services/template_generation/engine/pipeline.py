@@ -204,6 +204,14 @@ async def generate_template_a2ui(
                 f"{_MODULE} template_retrieval_intent "
                 f"decision={json_for_log(intent.model_dump(mode='json', by_alias=True))}"
             )
+            if intent.contains_static_data:
+                logger.info(
+                    f"{_MODULE} template_route_static_data_rejected "
+                    "reason=first_layer_static_data_present"
+                )
+                raise TemplateRouteNotApplicable(
+                    "first-layer request requires static display content"
+                )
             battery_action_is_optional = False
             try:
                 validate_earphone_action_exclusions(intent, selected_task_spec)

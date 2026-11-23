@@ -75,8 +75,10 @@ Tersel 生产路线都使用 `DESIGN_COMPACT` Processor，因此模块最终返�
 
 - 加载并校验 Template Controls、Provider Bundle、Theme、Layout 和 CardTpl。
 - 从已裁决的 TaskSpec、CardSpec 和有效数据绑定中判断模板是否可完整覆盖需求。
-- 第一层模型只标定用户显式字段、可为空的业务主焦点和显式 Action；Search 筛选数据可用模板，
-  Planner 确定 Theme、Layout、业务顺序和 Action 消费位置，第二层模型只选择一个完整 Plan 并填充 Props。
+- 第一层模型只标定用户显式字段、可为空的业务主焦点和显式 Action，并输出是否包含静态数据的标记；
+  包含静态数据的请求不进入模板路线，由公共回退交还原生成链路承载静态与动态混合展示。Search 筛选
+  数据可用模板，Planner 确定 Theme、Layout、业务顺序和 Action 消费位置，第二层模型只选择一个完整
+  Plan 并填充 Props。
 - 确定性执行语法校验、数据准入、布局约束、Action 绑定和 CardTpl 展开。
 - 生成标准 A2UI，并适配为当前 Processor 的源 DSL。
 
