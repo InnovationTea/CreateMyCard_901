@@ -145,6 +145,13 @@ Search 路线的首层输出是 `TemplateSearchIntent`：
 - Search 不读取 Action 数量或布局后缀；`HeroTitle`、`HeroContent`、`Support`、`Compact`、`Hero`、
   `Full`、`WideHero`、`WideFull` 都按相同数据规则进入候选。
 
+首层意图还包含 `containsStaticData` 标记：用户明确要求展示不来自动态候选字段的固定文字、固定值
+或按固定内容展示的外部事实时为 `true`。服务端在意图日志后检查该标记，为 `true` 时记录
+`template_route_static_data_rejected` 并直接判定模板不适用，不再执行 Search、默认动作策略和
+日程补充分支；普通 Compact 创建回退原生成链路承载静态与动态混合展示，Tersel 模板入口按严格
+语义失败。旧 `llm` 首层路线保持原行为。判定边界与例外见
+[Search 与 Planner 契约](template-search-planner-contract.md)。
+
 结果是按 capability/business 分组的 `TemplateSearchResult`，只包含显式字段、模板 ID 及其覆盖字段。
 
 ### 3.3 Planner 与二层组合

@@ -78,6 +78,9 @@ class TemplateSearchIntent(BaseModel):
     allow_battery_settings_fallback: bool = Field(
         default=False, alias="allowBatterySettingsFallback", strict=True,
     )
+    contains_static_data: bool = Field(
+        default=False, alias="containsStaticData", strict=True,
+    )
 
     @field_validator("required_output_fields_by_capability")
     @classmethod
@@ -279,6 +282,22 @@ def build_template_retrieval_prompt(
         "action 仅当用户明确要求点击、跳转或操作时才选择 actionCandidates 中"
         f"语义一致的零到 {action_limit} 个不重复 eventId；不能因候选事件存在而默认选择。"
     )
+    static_data_rule = (
+        "containsStaticData 判断用户明确要求展示的内容是否包含静态数据："
+        "静态数据是需要按固定内容原样展示、且不来自任何动态候选字段的信息，"
+        "例如用户指定的标语、备注、提醒语等固定文字，"
+        "无对应动态字段的固定数值或日期，"
+        "以及userQuery中“本轮卡片静态内容（用作展示的外部事实）”段落里"
+        "要求按固定内容展示的外部事实。"
+        "以下情形不算静态数据：动态候选字段本身及其展示要求；"
+        "能力调用参数（如倒计时目标日期、导航目的地）；"
+        "只说明卡片用途或类型的文字（如“倒计时卡片”）；"
+        "模板按规则以可信文本补充的标题或倒计时事件名；"
+        "静态事实段落仅复述动态候选字段需求或描述数据来源。"
+        "同时要求动态字段和固定展示内容时仍为true；"
+        "为true时服务端会把请求转回普通生成链路，不再使用业务模板；"
+        "不能为使用模板把固定内容改写成动态字段。"
+    )
     layout_rule = (
         "不得判断业务是否能组成布局，也不得决定业务位置或 Action 消费者；"
         "这些组合约束由服务端 Planner 在数据 Search 之后处理。"
@@ -339,6 +358,7 @@ def build_template_retrieval_prompt(
         "未使用的业务必须省略 key，不以空数组占位；天气预报字段已包含所需日期或星期时，"
         "不要额外加入未选择任何字段的 GetCurrentTime。"
         + action_rule
+        + static_data_rule
         +
         "以下allowCalendarViewFallback及其动作限制仅适用于日历兜底，不适用于耳机："
         "allowCalendarViewFallback 仅标记单日历日程用户是否允许默认查看入口："
